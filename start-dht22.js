@@ -9,10 +9,13 @@ storage.initSync({
 });
 var sensorLib = require('node-dht-sensor');
 var seconds = [];
+var temps = [];
 var secondsTimestamp = new Date().getTime();
 var savedMinutes = storage.getItem('emergency-shutoff-minutes') || {};
 var minutes = savedMinutes.minutes || {};
+var savedTemps = savedMinutes.temps || {};
 var minuteTimestamp = savedMinutes.timestamp || 0;
+var savedHours = storage.getItem('water-hours') || {};
 var pfio;
 
 process.on('listen', function (server) {
@@ -24,6 +27,8 @@ process.on('listen', function (server) {
             fahrenheit: 0,
             humidity: 0
         };
+        var timeline = storage.getItem('water-hours') || {};
+        res.data.temp1.timeline = timeline;
     });
 
 });
@@ -91,6 +96,7 @@ var sensor = {
         if(readout.humidity > .1)
         {
             seconds[seconds.length] = readout.humidity.toFixed(2);
+            temps[temps.length] = readout.temperature.toFixed(2);
             storage.setItem('temp1', {
                 timestamp: now.getTime(),
                 celsius: readout.temperature.toFixed(2),
@@ -104,13 +110,16 @@ var sensor = {
         if(now.getTime() - secondsTimestamp > 60 * 1000)
         {
             var median = Math.median(seconds);
+            var medianTemps = Math.median(temps);
             seconds = [];
 
             // store minute save a days worth
             minutes[secondsTimestamp] = median;
+            savedTemps[secondsTimestamp] = medianTemps;
             storage.setItem('emergency-shutoff-minutes', {
                 timestamp: minuteTimestamp,
-                minutes: minutes
+                minutes: minutes,
+                temps: savedTemps
             });
 
             // restart seconds timer since last update
@@ -122,8 +131,18 @@ var sensor = {
         if(now.getTime() - minuteTimestamp  > 60 * 1000)
         {
             var count = 0;
+            var hourAverages = {};
             for(var m in minutes)
             {
+                // if m is more than 24 hours ago, store it
+                var h = Math.floor((now.getTime() - m) / 60 * 60 * 1000) * 60 * 60 * 1000;
+                if(h > 24 * 60 * 60 * 1000)
+                {
+                    if(typeof hourAverages[h] == 'undefined')
+                        hourAverages[h] = [];
+                    hourAverages[h][hourAverages[h].length] = {hum: minutes[m], temp: savedTemps[m] || 0}
+                }
+
                 // check humidity readings within the last hour
                 if(now.getTime() - m < safetyTimespan * 1000 &&
                     parseFloat(minutes[m]) > maxHumidity)
@@ -138,6 +157,20 @@ var sensor = {
                 }
             }
 
+            // get the averages for hour temperature readings and save
+            var save = false;
+            for(var t in hourAverages)
+            {
+                savedHours[t] = {
+                    humidity: Math.median(hourAverages[t].map(function (x) {return x.hum; }).get()),
+                    temperature: Math.median(hourAverages[t].map(function (x) {return x.temp; }).get())
+                };
+                save = true;
+            }
+            if(save)
+                storage.setItem('water-hours', savedHours);
+
+            // log the current temperature
             var temp1 = storage.getItem('temp1');
             console.log('Emergency wet detector: ' + count + ' minutes, ' +
                 'Fahrenheit: ' + (temp1.fahrenheit || 0) + 'F, ' +
