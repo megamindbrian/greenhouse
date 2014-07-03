@@ -173,9 +173,76 @@ textarea {
     fill:#555555;
 }
 
+#water-status input[type="radio"] + label
+{
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #999999;
+    display: inline-block;
+    min-width: 80px;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    opacity: .85;
+    transition: opacity .25s linear;
+    text-align: center;
+}
 
+#water-status input[type="radio"] + label:before
+{
+    border: 3px solid #666666;
+    border-radius: 16px;
+    content: " ";
+    height: 100%;
+    line-height: 0;
+    margin: -3px;
+    padding: 0;
+    position: absolute;
+    width: 100%;
+    opacity: 0;
+    top: 0;
+    left: 100%;
+    visibility: hidden;
+    /* transition: left .25s, opacity .25s; */
+}
 
+#water-status input[type="radio"]:checked + label:before
+{
+    left: 0;
+    opacity: 1;
+    visibility: visible;
+}
 
+#water-status input[type="radio"]:checked + label
+{
+    opacity: 1;
+    padding: 15px;
+    margin: 5px;
+    transition: opacity .25s linear;
+}
+
+#water-status input[type="radio"]
+{
+    height: 1px;
+    width: 1px;
+    opacity: 0;
+    line-height: 1px;
+    margin:0 -4px 0 0;
+    padding:0;
+}
+
+#water-status input[type="radio"] + label:hover:before
+{
+    visibility: visible;
+    left: 0;
+    top: 0;
+    opacity: 1;
+    transition: left .25s, opacity .25s;
+}
 
 
 

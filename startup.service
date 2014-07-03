@@ -1,0 +1,10 @@
+[Service]
+ExecStart=/usr/bin/js /home/greenhouse/startup.js
+#Restart=on-failure
+StandardOutput=syslog
+SyslogIdentifier=greenhouse
+User=root
+Group=root
+
+[Install]
+WantedBy=multi-user.target

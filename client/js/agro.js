@@ -27,22 +27,17 @@
 
         updateInterval = setInterval(function () {
             $.ajax({
-                url: '/index.php',
+                url: '/plugins',
                 dataType: 'json',
-                data:{last_update: history[history.length - 1].time.getTime() / 1000},
+                data:{},
                 success: function (data)
                 {
-                    $('#humidity strong').text(data.humidity);
-                    $('#temperature strong').html(data.celsius + ' <sub> / ' + data.fahrenheit + '</sub>');
-                    $('.current-box small').text('Last updated: ' + data.time);
-
-                    updateHistory(data.history);
-                    redraw();
+                    jQuery(document).trigger('plugins', data);
                 }
            });
         }, 2000);
 
-        $(window).resize(redraw);
+        //$(window).resize(redraw);
 
         var color = d3.scale.category10();
 
@@ -53,8 +48,8 @@
 
         if(typeof window.initialHistory != 'undefined')
         {
-            updateHistory(window.initialHistory);
-            setTimeout(lines, 1);
+            //updateHistory(window.initialHistory);
+            //setTimeout(lines, 1);
         }
 
         function updateHistory(newHistory)
@@ -212,7 +207,9 @@
 
             chartBody.selectAll("circle.line1, text.line1")
                 .data(function(d) { return [history[k], history[k]]; })
-                .attr("transform", function(d) { return "translate(" + x(d.time) + "," + y(d.celsius) + ")"; });
+                .attr("transform", function(d) {
+                    return "translate(" + x(d.time) + "," + y(d.celsius) + ")";
+                });
 
             chartBody.selectAll("circle.line2, text.line2")
                 .data(function(d) { return [history[k], history[k]]; })
